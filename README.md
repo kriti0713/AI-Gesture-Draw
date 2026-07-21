@@ -1,56 +1,131 @@
-AI Gesture Drawing App 🎨🖐️
-An interactive, real-time virtual drawing canvas built using Python, OpenCV, and MediaPipe. Draw, sketch, erase, render 2D geometric shapes, and select colors on your screen using natural hand gestures captured by your webcam!
+<div align="center">
 
-🌟 Features
-☝️ Gesture-Based Control:
+# 🎨🖐️ AI Gesture Drawing App
 
-Drawing Mode: Lift only your index finger to draw.
+**An interactive, real-time virtual drawing canvas controlled entirely by hand gestures.**
 
-Hover / Selection Mode: Lift index + middle fingers to move your cursor without drawing or to select colors and shapes.
+Draw, sketch, erase, render 2D geometric shapes, and pick colors on screen — all using natural hand gestures captured by your webcam, powered by Python, OpenCV, and MediaPipe.
 
-Pinch Resize Mode: Pinch thumb and index finger together to adjust brush thickness dynamically.
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-Hand%20Tracking-00C4B4?style=for-the-badge&logo=google&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-Canvas%20Ops-013243?style=for-the-badge&logo=numpy&logoColor=white)
 
-Two-Hand Shape Mode: Point with index fingers on both hands simultaneously to span and render 2D geometric shapes.
+</div>
 
-🎨 Interactive Color & Shape Palette:
+---
 
-Colors: Red, Blue, Green, Yellow, and Eraser.
+## 📖 Overview
 
-Shapes: Lines, Rectangles, Squares, Circles, Triangles, and Stars.
+AI Gesture Drawing App replaces the mouse and keyboard with your hands. Using real-time hand landmark detection, it turns your webcam feed into a fully interactive canvas — draw freehand strokes, build geometric shapes with both hands, resize your brush with a pinch, and manage your artwork, all without touching a physical input device.
 
-🧹 Virtual Eraser & Clear Screen: Wipe out specific drawing errors using the Eraser tool, or clear the entire canvas with a single keypress.
+---
 
-↩️ Undo Functionality: Save canvas snapshots to easily revert recent strokes or shapes.
+## 🌟 Features
 
-💾 Save Canvas: Save your artwork directly to your disk as a timestamped PNG file.
+### ☝️ Gesture-Based Control
+| Gesture | Mode | Description |
+|---|---|---|
+| Index finger up | **Drawing** | Draws lines on the canvas using the active color |
+| Index + middle fingers up | **Hover / Selection** | Moves the cursor without drawing; used to select colors or shapes |
+| Thumb + index pinch | **Pinch Resize** | Adjusts brush thickness dynamically based on pinch distance |
+| Both index fingers up (two hands) | **Two-Hand Shape** | Spans and renders a 2D geometric shape between both fingertips in real time |
 
-⚡ Line Smoothing: Employs exponential moving average filtering to remove jitter and hand tremors for clean, smooth strokes.
+### 🎨 Interactive Color & Shape Palette
+- **Colors:** Red, Blue, Green, Yellow, Eraser
+- **Shapes:** Lines, Rectangles, Squares, Circles, Triangles, Stars
 
-📐 Full-Screen Canvas Scaling: Automatically resizes and scales high-resolution video streams (1280x720 HD).
+### 🧹 Canvas Tools
+- **Virtual Eraser & Clear Screen** — remove specific strokes or wipe the whole canvas instantly
+- **Undo** — save canvas snapshots to revert recent strokes or shapes
+- **Save Canvas** — export your artwork as a timestamped PNG file
 
-🛠️ Tech Stack
-Python 3.x
+### ⚡ Smooth, Reliable Tracking
+- **Line Smoothing** — exponential moving average filtering removes jitter and hand tremors for clean strokes
+- **Full-Screen Canvas Scaling** — automatically resizes and scales high-resolution video streams (1280×720 HD)
 
-OpenCV (Computer Vision & Video Processing)
+---
 
-MediaPipe Tasks Vision API (Hand Landmark Detection)
+## 🛠️ Tech Stack
 
-NumPy (Canvas Matrix Operations)
+| Layer | Technology |
+|---|---|
+| Language | Python 3.x |
+| Computer Vision & Video Processing | OpenCV |
+| Hand Landmark Detection | MediaPipe Tasks Vision API |
+| Canvas Matrix Operations | NumPy |
 
-🚀 Getting Started
-Follow these steps to set up and run the project on your local machine.
+---
 
-1. Prerequisites
-Make sure you have Python installed. Clone this repository and navigate to the project directory:
+## 🚀 Getting Started
 
+### 1. Prerequisites
+
+Make sure Python 3.x is installed, then clone the repository:
+
+```bash
 git clone https://github.com/kriti0713/AI-Gesture-Draw.git
 cd AI-Gesture-Draw
+```
 
-2. Install DependenciesInstall all required libraries using pip:Bashpip install opencv-python mediapipe numpy
-3. Download Model WeightsMediaPipe requires the pretrained hand_landmarker.task file:Download hand_landmarker.task from the official MediaPipe Documentation.Place the hand_landmarker.task file directly in the root directory of this project folder.💻 How to RunRun the script from your terminal:Bashpython hand_track.py
-🎮 Controls & GesturesGesture / KeyActionDescription☝️ Index Finger UpDrawDraws lines on the canvas using the currently active color.✌️ Index + Middle UpHover / SelectMoves cursor without drawing. Hover over palette options to change tools/colors/shapes.🤏 Thumb + Index PinchResize BrushAdjust brush size by changing the distance between thumb and index finger.🖐️🖐️ Two Index Fingers UpBuild ShapeRenders selected shape between both index fingertips in real-time.u (Keyboard)UndoReverts the last drawn stroke or shape.s (Keyboard)SaveSaves the current canvas state as a .png file.c (Keyboard)Clear CanvasInstantly clears all drawn strokes from the screen.q (Keyboard)QuitCloses the application safely.📂 Project StructurePlaintextAI-Gesture-Draw/
+### 2. Install Dependencies
+
+```bash
+pip install opencv-python mediapipe numpy
+```
+
+### 3. Download Model Weights
+
+MediaPipe requires the pretrained `hand_landmarker.task` file:
+
+1. Download `hand_landmarker.task` from the [official MediaPipe documentation](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
+2. Place it in the **root directory** of this project folder
+
+---
+
+## 💻 How to Run
+
+```bash
+python hand_track.py
+```
+
+---
+
+## 🎮 Controls & Gestures
+
+| Gesture / Key | Action | Description |
+|---|---|---|
+| ☝️ Index finger up | **Draw** | Draws lines on the canvas using the currently active color |
+| ✌️ Index + middle up | **Hover / Select** | Moves cursor without drawing; hover over palette to change tools/colors/shapes |
+| 🤏 Thumb + index pinch | **Resize brush** | Adjusts brush size based on the distance between thumb and index finger |
+| 🖐️🖐️ Two index fingers up | **Build shape** | Renders the selected shape between both index fingertips in real time |
+| `u` | **Undo** | Reverts the last drawn stroke or shape |
+| `s` | **Save** | Saves the current canvas as a `.png` file |
+| `c` | **Clear canvas** | Instantly clears all drawn strokes from the screen |
+| `q` | **Quit** | Closes the application safely |
+
+---
+
+## 📂 Project Structure
+
+```
+AI-Gesture-Draw/
 │
 ├── hand_track.py            # Main application script
 ├── hand_landmarker.task     # MediaPipe landmark detector model (ignored in git)
-├── .gitignore               # Git ignore file
-└── README.md                # Project documentation
+├── .gitignore                # Git ignore file
+└── README.md                 # Project documentation
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/kriti0713/AI-Gesture-Draw/issues) or open a pull request.
+
+---
+
+## 👩‍💻 Author
+
+**Kritika Gupta**
+[GitHub](https://github.com/kriti0713) · [LinkedIn](https://www.linkedin.com/in/kritikagupta007) · [Email](mailto:gkritika007@gmail.com)
