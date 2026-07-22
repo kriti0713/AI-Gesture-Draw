@@ -41,12 +41,16 @@ SHAPE_COL_X = 100
 SHAPE_ROW_H = 55
 SHAPE_START_Y = 60
 
+PINCH_THRESHOLD = 40
+
 undo_stack = []
 MAX_UNDO = 20
 
 drawing_stroke = False
 shape_active = False
+building_shape = False
 shape_p1, shape_p2 = None, None
+prev_any_pinching = False
 
 def fingers_up(hand_landmarks):
     tips = [4, 8, 12, 16, 20]
@@ -63,7 +67,8 @@ def fingers_up(hand_landmarks):
         else:
             fingers.append(0)
 
-    return fingers   
+    return fingers  
+
 
 def save_undo_state():
     undo_stack.append(canvas.copy())
@@ -87,7 +92,7 @@ def draw_shape(target, p1, p2, color, thickness, shape):
     cx, cy = (x1 + x2)  // 2, (y1 + y2) // 2    
 
     if shape == "Line":
-       cv2.Line(target, p1, p2, color, thickness)
+       cv2.line(target, p1, p2, color, thickness)
 
     elif shape == "Rect":
         cv2.rectangle(target, p1, p2, color, thickness)
@@ -157,37 +162,73 @@ while True:
     hands_list = result.hand_landmarks if result.hand_landmarks else []
     num_detected = len(hands_list)
 
-    both_pointing = False
-    if num_detected == 2:
-        f0 = fingers_up(hands_list[0])
-        f1 = fingers_up(hands_list[1])
-        both_pointing = (f0[1] == 1) and (f1[1] == 1)
+    fingers_per_hand = [fingers_up(hl) for hl in hands_list]
+    pure_point = [f[1] == 1 and f[2] == 0 for f in fingers_per_hand]
+    both_pointing = num_detected == 2 and pure_point[0] and pure_point[1]
 
-    if shape_mode != "None" and num_detected == 2:
-        mode_text = f"Building {shape_mode}"
+    any_pinching = False
+    for h1 in hands_list:
+        thumb = h1[4]
+        index = h1[8]
+        dist_px = math.hypot((thumb.x - index.x) * w, (thumb.y - index.y) * h)
+        if dist_px < PINCH_THRESHOLD:
+            any_pinching = True
+            break
+
+    pinch_event = any_pinching and not prev_any_pinching
+
+    if shape_mode != "None" and building_shape:
+
+        if pinch_event:        
+            mode_text = "Shape Dropped!"
+            if shape_p1 and shape_p2:
+                save_undo_state()
+                draw_shape(canvas, shape_p1, shape_p2, draw_color, brush_thickness, shape_mode)
+            building_shape = False
+            shape_p1, shape_p2 = None, None
+        
+
+        elif both_pointing:
+            mode_text = f"Building {shape_mode} (pinch to drop)"
+            p1_lm = hands_list[0][8]
+            p2_lm = hands_list[1][8]
+            p1 = (int(p1_lm.x * w), int(p1_lm.y * h))
+            p2 = (int(p2_lm.x * w), int(p2_lm.y * h)) 
+            shape_p1, shape_p2 = p1, p2                        
+
+
+            cv2.circle(frame, p1, 10, (0, 255, 0), -1)
+            cv2.circle(frame, p2, 10, (0, 255, 0), -1)
+            draw_shape(frame, p1, p2, draw_color, brush_thickness, shape_mode)
+
+        else:
+            mode_text = "Shape Cancelled"
+            building_shape = False
+            shape_p1, shape_p2 = None, None
+
+        prev_x, prev_y = 0, 0
+        drawing_stroke = False    
+
+    elif shape_mode != "None" and both_pointing:
+        mode_text = f"Building {shape_mode} (pinch to drop)"
         p1_lm = hands_list[0][8]
         p2_lm = hands_list[1][8]
         p1 = (int(p1_lm.x * w), int(p1_lm.y * h))
-        p2 = (int(p2_lm.x * w), int(p2_lm.y * h))
+        p2 = (int(p2_lm.x * w), int(p2_lm.y * h)) 
+        shape_p1, shape_p2 = p1, p2  
+        building_shape = True                      
 
-        shape_p1, shape_p2 = p1, p2
-        shape_active = True
 
         cv2.circle(frame, p1, 10, (0, 255, 0), -1)
         cv2.circle(frame, p2, 10, (0, 255, 0), -1)
         draw_shape(frame, p1, p2, draw_color, brush_thickness, shape_mode)  
 
         prev_x, prev_y = 0, 0
-        drawing_stroke = False
+        drawing_stroke = False  
+
+
 
     else:
-        if shape_active:
-            if shape_p1 and shape_p2:
-                save_undo_state()
-                draw_shape(canvas, shape_p1, shape_p2, draw_color, brush_thickness, shape_mode)
-            shape_active = False
-            shape_p1, shape_p2 = None, None
-
         if num_detected >= 1:
             hand_landmarks = hands_list[0]
             index_tip = hand_landmarks[8]
@@ -262,6 +303,8 @@ while True:
         else:
             prev_x, prev_y = 0, 0
             drawing_stroke = False
+
+    prev_any_pinching = any_pinching        
 
     combined = cv2.addWeighted(frame, 0.7, canvas, 0.7, 0)
     cv2.putText(combined, f"Mode: {mode_text}", (20, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
