@@ -6,7 +6,6 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# --- MediaPipe Hand Landmarker Setup ---
 base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
 options = vision.HandLandmarkerOptions(
     base_options=base_options, 
@@ -18,7 +17,7 @@ options = vision.HandLandmarkerOptions(
 )
 detector = vision.HandLandmarker.create_from_options(options)
 
-# --- Camera Setup ---
+
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -26,7 +25,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 canvas = None
 prev_x, prev_y = 0, 0
 
-# --- Palette & Tools Configuration ---
+
 colors = [
     ((0, 0, 255), "Red"),
     ((255, 0, 0), "Blue"),
@@ -48,7 +47,7 @@ SHAPE_START_Y = 75
 TOP_BAR_H = 65
 PINCH_THRESHOLD = 40
 
-# --- Undo/Redo & Cooldown States ---
+
 undo_stack = []
 redo_stack = []
 MAX_UNDO = 20
@@ -58,11 +57,11 @@ building_shape = False
 shape_p1, shape_p2 = None, None
 prev_any_pinching = False
 
-# Cooldown for discrete UI buttons
-last_ui_click_time = 0
-UI_COOLDOWN = 0.4  # seconds
 
-# Camera flash effect variable
+last_ui_click_time = 0
+UI_COOLDOWN = 0.4  
+
+
 flash_alpha = 0
 
 
@@ -70,12 +69,12 @@ def fingers_up(hl):
     """Accurately detects open fingers with stabilized thumb detection."""
     fingers = []
     
-    # Robust Thumb detection based on distance to Pinky base landmark (17)
+   
     thumb_dist = math.hypot(hl[4].x - hl[17].x, hl[4].y - hl[17].y)
     ref_dist = math.hypot(hl[2].x - hl[17].x, hl[2].y - hl[17].y)
     fingers.append(1 if thumb_dist > ref_dist * 1.25 else 0)
 
-    # 4 Fingers (Index, Middle, Ring, Pinky)
+   
     tips = [8, 12, 16, 20]
     for tip in tips:
         if hl[tip].y < hl[tip - 2].y:
@@ -151,7 +150,7 @@ def draw_neon_line(img, p1, p2, color, thickness):
         cv2.line(img, p1, p2, (255, 255, 255), core_thick)
 
 
-# --- Main Loop ---
+
 while True:
     success, frame = cap.read()
     if not success:
@@ -164,10 +163,10 @@ while True:
     if canvas is None:
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
 
-    # UI Overlay Setup
+  
     ui_overlay = frame.copy()
 
-    # --- Draw Glassmorphic Top Toolbar ---
+    
     cv2.rectangle(ui_overlay, (0, 0), (w, TOP_BAR_H), (30, 30, 30), -1)
     color_box_w = 90
     
@@ -185,7 +184,7 @@ while True:
         lbl = name if name != "Eraser" else "ERASER"
         cv2.putText(ui_overlay, lbl, (x1 + 8, y1 + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0) if name == "Eraser" else (255, 255, 255), 1)
 
-    # Render Buttons
+    
     action_buttons = [
         ("FILL: ON" if is_filled_shape else "FILL: OFF", (520, 8, 620, TOP_BAR_H - 8)),
         ("BG: DARK" if dark_canvas_mode else "BG: VIDEO", (630, 8, 730, TOP_BAR_H - 8)),
@@ -199,7 +198,7 @@ while True:
         cv2.rectangle(ui_overlay, (x1, y1), (x2, y2), (200, 200, 200), 1)
         cv2.putText(ui_overlay, label, (x1 + 6, y1 + 32), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
-    # --- Draw Glassmorphic Sidebar (Shapes) ---
+   
     cv2.rectangle(ui_overlay, (0, SHAPE_START_Y - 5), (SHAPE_COL_X + 5, SHAPE_START_Y + len(shapes) * SHAPE_ROW_H + 5), (30, 30, 30), -1)
     shape_rects = []
     for i, name in enumerate(shapes):
@@ -213,7 +212,7 @@ while True:
 
     cv2.addWeighted(ui_overlay, 0.65, frame, 0.35, 0, frame)
 
-    # Process Hand Landmarks
+    
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
     timestamp_ms = int(time.time() * 1000)
@@ -227,7 +226,7 @@ while True:
     pure_point = [f[1] == 1 and f[2] == 0 for f in fingers_per_hand]
     both_pointing = num_detected == 2 and pure_point[0] and pure_point[1]
 
-    # Check Pinch
+   
     any_pinching = False
     for h1 in hands_list:
         thumb, index = h1[4], h1[8]
@@ -237,7 +236,7 @@ while True:
             break
     pinch_event = any_pinching and not prev_any_pinching
 
-    # --- Shape Building Mode (Two-Handed) ---
+    
     if shape_mode != "None" and building_shape:
         if pinch_event:
             mode_text = "Shape Placed!"
@@ -273,7 +272,7 @@ while True:
         prev_x, prev_y = 0, 0
         drawing_stroke = False
 
-    # --- Single Hand Control ---
+    
     elif num_detected >= 1:
         hl = hands_list[0]
         fingers = fingers_up(hl)
@@ -281,7 +280,7 @@ while True:
         cx, cy = int(index_tip.x * w), int(index_tip.y * h)
         tx, ty = int(thumb_tip.x * w), int(thumb_tip.y * h)
 
-        # 1. Palm Eraser (Open 5 Fingers)
+        
         if sum(fingers) == 5:
             mode_text = "Palm Eraser"
             palm_cx, palm_cy = int(hl[9].x * w), int(hl[9].y * h)
@@ -291,7 +290,7 @@ while True:
             cv2.circle(canvas, (palm_cx, palm_cy), 60, (0, 0, 0), -1)
             cv2.circle(frame, (palm_cx, palm_cy), 60, (200, 200, 200), 2)
 
-        # 2. Smooth Brush Resizing (STRICT GESTURE: Thumb + Index UP, Middle, Ring & Pinky DOWN)
+       
         elif fingers == [1, 1, 0, 0, 0]:
             mode_text = "Resize Brush"
             prev_x, prev_y = 0, 0
@@ -300,7 +299,7 @@ while True:
             pinch_dist = math.hypot(tx - cx, ty - cy)
             target_thickness = int(np.interp(pinch_dist, [30, 200], [2, 50]))
             
-            # Smooth interpolation (Exponential Moving Average) to stop jumping
+            
             brush_thickness = int(brush_thickness * 0.75 + target_thickness * 0.25)
             
             mid_x, mid_y = (tx + cx) // 2, (ty + cy) // 2
@@ -308,17 +307,17 @@ while True:
             cv2.circle(frame, (mid_x, mid_y), brush_thickness // 2, draw_color, -1)
             cv2.putText(frame, f"Size: {brush_thickness}", (mid_x + 15, mid_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-        # 3. Index Finger Extended (Drawing & UI Selection)
+        
         elif fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0:
             in_ui = False
 
-            # Top Bar: Colors & Actions
+            
             if cy < TOP_BAR_H:
                 in_ui = True
                 prev_x, prev_y = 0, 0
                 drawing_stroke = False
                 
-                # Colors
+                
                 for x1, y1, x2, y2, col, name in color_rects:
                     if x1 <= cx <= x2:
                         draw_color = col
@@ -327,7 +326,7 @@ while True:
                         cv2.circle(frame, (cx, cy), 8, (0, 255, 255), -1)
                         break
 
-                # Buttons
+                
                 if time.time() - last_ui_click_time > UI_COOLDOWN:
                     for label, (x1, y1, x2, y2) in action_buttons:
                         if x1 <= cx <= x2 and y1 <= cy <= y2:
@@ -351,7 +350,7 @@ while True:
                                 cv2.imwrite(filename, out_img)
                                 flash_alpha = 1.0
 
-            # Left Sidebar: Shapes
+            
             elif cx < SHAPE_COL_X and cy >= SHAPE_START_Y:
                 in_ui = True
                 prev_x, prev_y = 0, 0
@@ -363,7 +362,7 @@ while True:
                         cv2.circle(frame, (cx, cy), 8, (0, 255, 255), -1)
                         break
 
-            # Freehand Drawing Mode
+            
             if not in_ui:
                 if shape_mode == "None":
                     mode_text = "Eraser" if draw_color == (0, 0, 0) else "Drawing"
@@ -380,7 +379,7 @@ while True:
                     draw_neon_line(canvas, (prev_x, prev_y), (smooth_x, smooth_y), draw_color, brush_thickness)
                     prev_x, prev_y = smooth_x, smooth_y
 
-                    # Dynamic Cursor Halo
+                    
                     cv2.circle(frame, (cx, cy), brush_thickness // 2 + 4, draw_color, 2)
                     cv2.circle(frame, (cx, cy), 3, (255, 255, 255), -1)
                 else:
@@ -398,25 +397,25 @@ while True:
 
     prev_any_pinching = any_pinching
 
-    # Render Canvas Overlay Mode
+    
     if dark_canvas_mode:
         combined = cv2.addWeighted(np.zeros_like(frame), 1.0, canvas, 1.0, 0)
     else:
         combined = cv2.addWeighted(frame, 0.7, canvas, 0.8, 0)
 
-    # Screenshot Flash Animation
+    
     if flash_alpha > 0:
         flash_overlay = np.full_like(combined, 255)
         combined = cv2.addWeighted(combined, 1.0 - flash_alpha, flash_overlay, flash_alpha, 0)
         flash_alpha = max(0, flash_alpha - 0.15)
 
-    # Display HUD text
+    
     cv2.putText(combined, f"Mode: {mode_text}", (20, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
     cv2.putText(combined, "Touch UI to Select | S:Save | U:Undo | R:Redo | C:Clear | Q:Quit", (320, h - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
 
     cv2.imshow("Air Canvas Pro", combined)
 
-    # Keyboard Shortcuts
+    
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
